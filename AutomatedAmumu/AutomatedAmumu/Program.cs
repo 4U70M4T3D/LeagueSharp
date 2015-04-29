@@ -103,8 +103,9 @@ namespace AutomatedAmumu
             Game.OnUpdate += Game_OnUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
 
-            //Assembly loaded chat notification
-            Game.PrintChat("  <font color='#00FF00'>Automated Amuumu Loaded!</font>");
+            //Assembly loaded notification
+            Notifications.AddNotification("<font color='#00FF00'>Automated Amuumu Loaded!</font>", 4000);
+            
         }
 
         private static void Drawing_OnDraw(EventArgs args)
