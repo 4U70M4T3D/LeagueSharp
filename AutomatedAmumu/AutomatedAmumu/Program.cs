@@ -77,18 +77,19 @@ namespace AutomatedAmumu
 
             //Hitchance 
             _config.SubMenu("SKill Hitchance").AddItem(new MenuItem("QhitChance", "Q hitchance").SetValue(new Slider(2, 0, 3)));
+            _config.SubMenu("SKill Hitchance").AddItem(new MenuItem("QRange", "Q max range").SetValue(new Slider(1000, 0, 1100)));
             _config.SubMenu("SKill Hitchance").AddItem(new MenuItem("EhitChance", "E hitchance").SetValue(new Slider(2, 0, 3)));
             _config.SubMenu("SKill Hitchance").AddItem(new MenuItem("RhitChance", "R hitchance").SetValue(new Slider(2, 0, 3)));
-
+         
             //Drawings
             _config.SubMenu("Drawings").AddItem(new MenuItem("DrawQ", "DrawQ").SetValue(true));
             _config.SubMenu("Drawings").AddItem(new MenuItem("DrawW", "DrawW").SetValue(true));
             _config.SubMenu("Drawings").AddItem(new MenuItem("DrawE", "DrawE").SetValue(true));
             _config.SubMenu("Drawings").AddItem(new MenuItem("DrawR", "DrawR").SetValue(true));
-            _config.SubMenu("Drawings").AddItem(new MenuItem("Total damage", "Total damage").SetValue(new Circle(true, Color.White)));
+            _config.SubMenu("Drawings").AddItem(new MenuItem("Total damage", "Combo Damage").SetValue(new Circle(true, Color.White)));
 
             //Misc
-            _config.SubMenu("Misc").AddItem(new MenuItem("RminP", "AutoUlt min players.").SetValue(new Slider(3, 1, 5)));
+            _config.SubMenu("Misc").AddItem(new MenuItem("RminP", "Min players to ult").SetValue(new Slider(3, 1, 5)));
             _config.SubMenu("Misc").AddItem(new MenuItem("EKillsteal", "E kill Steal").SetValue(true));
             _config.SubMenu("Misc").AddItem(new MenuItem("WToggle", "W Auto Toggle").SetValue(true));
             _config.SubMenu("Misc").AddItem(new MenuItem("TrinketSWap", "Autobuy Red trinket at lvl 9").SetValue(true));
@@ -104,8 +105,7 @@ namespace AutomatedAmumu
             Drawing.OnDraw += Drawing_OnDraw;
 
             //Assembly loaded notification
-            Notifications.AddNotification("<font color='#00FF00'>Automated Amuumu Loaded!</font>", 4000);
-            
+            Notifications.AddNotification("<font color='#00FF00'>Automated Amuumu Loaded!</font>", 4000);          
         }
 
         private static void Drawing_OnDraw(EventArgs args)
@@ -117,8 +117,8 @@ namespace AutomatedAmumu
             CustomDamageIndicator.Enabled = _config.Item("Total damage").GetValue<Circle>().Active;
 
             if (_config.Item("DrawQ").GetValue<bool>() && _q.IsReady())
-            {
-                Render.Circle.DrawCircle(ObjectManager.Player.Position, _q.Range, Color.LawnGreen);
+            {             
+                Render.Circle.DrawCircle(ObjectManager.Player.Position, _config.Item("QRange").GetValue<Slider>().Value, Color.LawnGreen);
             }
             if (_config.Item("DrawW").GetValue<bool>() && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.W).ToggleState != 1)
             {
@@ -152,6 +152,7 @@ namespace AutomatedAmumu
                 }       
             }
 
+            //Check if enemies are nearby 
             if (_config.Item("WToggle").GetValue<bool>() &&
                 ObjectManager.Player.Spellbook.GetSpell(SpellSlot.W).ToggleState != 1)
             {
@@ -174,7 +175,7 @@ namespace AutomatedAmumu
                 //Use q
                 if (_config.Item("UseQCombo").GetValue<bool>())
                 {
-                    if (target.IsValidTarget(_q.Range) && _q.IsReady())
+                    if (target.IsValidTarget(_config.Item("QRange").GetValue<Slider>().Value) && _q.IsReady())
                     {
                         _q.CastIfHitchanceEquals(target, Hitchances[_config.Item("QhitChance").GetValue<Slider>().Value]);
                     }
