@@ -105,7 +105,7 @@ namespace AutomatedAmumu
             Drawing.OnDraw += Drawing_OnDraw;
 
             //Assembly loaded notification
-            Notifications.AddNotification("<font color='#00FF00'>Automated Amuumu Loaded!</font>", 4000);          
+            Notifications.AddNotification("Automated Amuumu Loaded!", 8000);          
         }
 
         private static void Drawing_OnDraw(EventArgs args)
