@@ -15,8 +15,9 @@ namespace LoadingFreezeCheck
 
         static void Main()
         {
-            Game.OnStart += GameStarted;
-            CustomEvents.Game.OnGameLoad += GameStarted;
+            Game.OnStart += OnGameLoad;
+            CustomEvents.Game.OnGameLoad += OnGameLoad;
+            Game.OnUpdate += OnUpdate;
             Drawing.OnDraw += DrawNotFrozen;
         }
         private static void DrawNotFrozen(EventArgs args)
@@ -27,15 +28,20 @@ namespace LoadingFreezeCheck
             if (_counter > _colorChange)
             {
                 _lastColor = new Random().Next(0, 8);
-                Drawing.DrawText(100, 100, Colors[_lastColor], "LOADING");
+                Drawing.DrawText(10, 10, Colors[_lastColor], "LOADING");
                 _colorChange += 15;
             }
             else
             {
-                Drawing.DrawText(100, 100, Colors[_lastColor], "LOADING");
+                Drawing.DrawText(10, 10, Colors[_lastColor], "LOADING");
             }
         }
-        private static void GameStarted(EventArgs args)
+        private static void OnUpdate(EventArgs args)
+        {
+            if (Game.Time > 0)
+                _inGame = true;
+        }
+        private static void OnGameLoad(EventArgs args)
         {
             _inGame = true;
         }
