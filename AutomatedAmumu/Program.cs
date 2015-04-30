@@ -86,6 +86,7 @@ namespace AutomatedAmumu
             _config.SubMenu("Drawings").AddItem(new MenuItem("DrawW", "DrawW").SetValue(true));
             _config.SubMenu("Drawings").AddItem(new MenuItem("DrawE", "DrawE").SetValue(true));
             _config.SubMenu("Drawings").AddItem(new MenuItem("DrawR", "DrawR").SetValue(true));
+            _config.SubMenu("Drawings").AddItem(new MenuItem("Ctarget", "Draw current target").SetValue(true));
             _config.SubMenu("Drawings").AddItem(new MenuItem("Total damage", "Combo Damage").SetValue(new Circle(true, Color.White)));
 
             //Misc
@@ -113,7 +114,7 @@ namespace AutomatedAmumu
             if (ObjectManager.Player.IsDead) return;
 
             //Draw current target
-            if (_orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
+            if (_orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo && _config.Item("Ctarget").GetValue<bool>())
             {
                 var target = TargetSelector.GetTarget(_config.Item("QMaxRange").GetValue<Slider>().Value, TargetSelector.DamageType.Magical);
                 if (target.IsValidTarget(_config.Item("QMaxRange").GetValue<Slider>().Value))
