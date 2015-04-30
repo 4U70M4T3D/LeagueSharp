@@ -12,7 +12,7 @@ namespace AutomatedAmumu
         private static Orbwalking.Orbwalker _orbwalker;
         private static Spell _q, _w, _e, _r;
         private static readonly HitChance[] Hitchances = { HitChance.Low, HitChance.Medium, HitChance.High, HitChance.VeryHigh };
-        private static Obj_AI_Hero Player { get { return ObjectManager.Player; } }
+        private static Obj_AI_Hero Player { get { return ObjectManager.Player; } }      
 
         private static void Main(string[] args)
         {
@@ -51,7 +51,7 @@ namespace AutomatedAmumu
             _q = new Spell(SpellSlot.Q, 1000);         
             _w = new Spell(SpellSlot.W, 300);
             _e = new Spell(SpellSlot.E, 340);
-            _r = new Spell(SpellSlot.R, 550);
+            _r = new Spell(SpellSlot.R, 500);
 
             _q.SetSkillshot(250f, 90f, 2000f, true, SkillshotType.SkillshotLine);
             _w.SetSkillshot(0f, _w.Range, float.MaxValue, false, SkillshotType.SkillshotCircle);
@@ -76,8 +76,8 @@ namespace AutomatedAmumu
             _config.SubMenu("Combo").AddItem(new MenuItem("UseRCombo", "Use R").SetValue(true));
 
             //Hitchance 
-            _config.SubMenu("SKill Hitchance").AddItem(new MenuItem("QhitChance", "Q hitchance").SetValue(new Slider(2, 0, 3)));
-            _config.SubMenu("SKill Hitchance").AddItem(new MenuItem("QRange", "Q max range").SetValue(new Slider(1000, 0, 1100)));
+            _config.SubMenu("SKill Hitchance").AddItem(new MenuItem("QhitChance", "Q hitchance").SetValue(new Slider(2, 2, 3)));        
+            _config.SubMenu("SKill Hitchance").AddItem(new MenuItem("QMaxRange", "Q max range").SetValue(new Slider(1000, 0, 1100)));
             _config.SubMenu("SKill Hitchance").AddItem(new MenuItem("EhitChance", "E hitchance").SetValue(new Slider(2, 0, 3)));
             _config.SubMenu("SKill Hitchance").AddItem(new MenuItem("RhitChance", "R hitchance").SetValue(new Slider(2, 0, 3)));
          
@@ -92,7 +92,7 @@ namespace AutomatedAmumu
             _config.SubMenu("Misc").AddItem(new MenuItem("RminP", "Min players to ult").SetValue(new Slider(3, 1, 5)));
             _config.SubMenu("Misc").AddItem(new MenuItem("EKillsteal", "E kill Steal").SetValue(true));
             _config.SubMenu("Misc").AddItem(new MenuItem("WToggle", "W Auto Toggle").SetValue(true));
-            _config.SubMenu("Misc").AddItem(new MenuItem("TrinketSWap", "Autobuy Red trinket at lvl 9").SetValue(true));
+            _config.SubMenu("Misc").AddItem(new MenuItem("Strinket", "Swap to Red trinket at lvl 9 and upgrade").SetValue(true));
     
             //Attach to root
             _config.AddToMainMenu();
@@ -111,14 +111,31 @@ namespace AutomatedAmumu
         private static void Drawing_OnDraw(EventArgs args)
         {
             if (ObjectManager.Player.IsDead) return;
-            
+
+            //Draw current target
+            if (_orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
+            {
+                var target = TargetSelector.GetTarget(_config.Item("QMaxRange").GetValue<Slider>().Value, TargetSelector.DamageType.Magical);
+                if (target.IsValidTarget(_config.Item("QMaxRange").GetValue<Slider>().Value))
+                {
+                    Drawing.DrawText(1300, 940, Color.Green,
+                        "Current Target: " + target.ChampionName);
+                }
+                else
+                {
+                    Drawing.DrawText(1300, 940, Color.Red,
+                        "Current Target: None") ;
+                }
+            }
+
             // Total burts damage healthbar draw
             CustomDamageIndicator.DrawingColor = _config.Item("Total damage").GetValue<Circle>().Color;
             CustomDamageIndicator.Enabled = _config.Item("Total damage").GetValue<Circle>().Active;
 
+            //Ability Range indicators
             if (_config.Item("DrawQ").GetValue<bool>() && _q.IsReady())
-            {             
-                Render.Circle.DrawCircle(ObjectManager.Player.Position, _config.Item("QRange").GetValue<Slider>().Value, Color.LawnGreen);
+            {
+                Render.Circle.DrawCircle(ObjectManager.Player.Position, _config.Item("QMaxRange").GetValue<Slider>().Value, Color.LawnGreen);
             }
             if (_config.Item("DrawW").GetValue<bool>() && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.W).ToggleState != 1)
             {
@@ -130,7 +147,7 @@ namespace AutomatedAmumu
             }
             if (_config.Item("DrawR").GetValue<bool>() && _r.IsReady())
             {
-                Render.Circle.DrawCircle(ObjectManager.Player.Position, _w.Range, Color.Red);
+                Render.Circle.DrawCircle(ObjectManager.Player.Position, _r.Range, Color.Red);
             }
         }
 
@@ -162,11 +179,21 @@ namespace AutomatedAmumu
                 }
             }
 
+            //Auto buy red trinket
+            if (!_config.Item("Strinket").GetValue<bool>()) return;
+            if (Player.Level >= 9 && Player.InShop() || Player.IsDead && !(Items.HasItem(3364)))
+            {
+                Player.BuyItem(ItemId.Sweeping_Lens_Trinket);
+                if (Player.GoldCurrent >= 250) {
+                Player.BuyItem(ItemId.Oracles_Lens_Trinket);
+                }
+            }
+
             //Combo
             if (_orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
             {
 
-                var target = TargetSelector.GetTarget(_q.Range, TargetSelector.DamageType.Magical);
+                var target = TargetSelector.GetTarget(_config.Item("QMaxRange").GetValue<Slider>().Value, TargetSelector.DamageType.Magical);
 
                 if (!target.IsValidTarget())
                 {
@@ -175,7 +202,7 @@ namespace AutomatedAmumu
                 //Use q
                 if (_config.Item("UseQCombo").GetValue<bool>())
                 {
-                    if (target.IsValidTarget(_config.Item("QRange").GetValue<Slider>().Value) && _q.IsReady())
+                    if (target.IsValidTarget(_config.Item("QMaxRange").GetValue<Slider>().Value) && _q.IsReady())
                     {
                         _q.CastIfHitchanceEquals(target, Hitchances[_config.Item("QhitChance").GetValue<Slider>().Value]);
                     }
@@ -211,14 +238,7 @@ namespace AutomatedAmumu
                         _r.CastIfHitchanceEquals(target, Hitchances[_config.Item("RhitChance").GetValue<Slider>().Value]);
                     }
                 }
-            }
-            
-            //Auto buy red trinket
-            if (!_config.Item("TrinketSWap").GetValue<bool>()) return;
-            if (Player.Level >= 9 && Player.InShop() && !(Items.HasItem(3341) || Items.HasItem(3363)))
-            {
-                Player.BuyItem(ItemId.Sweeping_Lens_Trinket);
-            }
+            }          
         }
     }
 }
