@@ -1,4 +1,4 @@
-Automated Amumu
+Automated Amumu Changelog
 
 -1.0.0.1 - 4/30/2015: Bug fixes, Draw current target added, red trinket upgrade added
 
