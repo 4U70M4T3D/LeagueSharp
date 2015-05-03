@@ -250,7 +250,6 @@ namespace Automated_Evelyn
             {
                 SmiteSlot = spell.Slot;
                 _smiteSlot = new Spell(SmiteSlot, Range);
-                Notifications.AddNotification("It's Smiting time!", 4000);
                 return;
             }
         }
