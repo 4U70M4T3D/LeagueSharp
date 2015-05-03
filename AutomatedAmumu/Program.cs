@@ -22,24 +22,19 @@ namespace AutomatedAmumu
         private static float GetDamage(Obj_AI_Hero target)
         {
             float temp = 0;
-            if (_q.IsReady())
-            {
-                temp += _q.GetDamage(target);
-            }
-            if (_w.IsReady() && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.W).ToggleState != 1)
-            {
-                temp += _w.GetDamage(target);
-            }
-            if (_e.IsReady())
-            {
+            float mana = 0;
+
+            temp += Convert.ToSingle((Player.PercentAttackSpeedMod * 2) * Player.GetAutoAttackDamage(target, true));
+            if ((mana += _q.Instance.ManaCost) <= Player.Mana)
+                temp += 2 * _q.GetDamage(target);
+            if ((mana += _w.Instance.ManaCost * 2) <= Player.Mana)
+                temp += 2 * _w.GetDamage(target);
+            if (_e.IsReady() && (mana += _e.Instance.ManaCost) <= Player.Mana)
                 temp += _e.GetDamage(target);
-            }
-            if (_r.IsReady())
-            {
+            if (_r.IsReady() && (mana + _r.Instance.ManaCost) <= Player.Mana)
                 temp += _r.GetDamage(target);
-            }                    
             return temp;
-        }
+        }//end GetDamage
 
         private static void Game_OnGameLoad(EventArgs args)
         {
@@ -50,7 +45,7 @@ namespace AutomatedAmumu
             //Spells
             _q = new Spell(SpellSlot.Q, 1000);         
             _w = new Spell(SpellSlot.W, 300);
-            _e = new Spell(SpellSlot.E, 340);
+            _e = new Spell(SpellSlot.E, 330);
             _r = new Spell(SpellSlot.R, 500);
 
             _q.SetSkillshot(250f, 90f, 2000f, true, SkillshotType.SkillshotLine);
@@ -116,16 +111,10 @@ namespace AutomatedAmumu
             //Draw current target
             if (_orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo && _config.Item("Ctarget").GetValue<bool>())
             {
-                var target = TargetSelector.GetTarget(_config.Item("QMaxRange").GetValue<Slider>().Value, TargetSelector.DamageType.Magical);
-                if (target.IsValidTarget(_config.Item("QMaxRange").GetValue<Slider>().Value))
+                var target = TargetSelector.GetTarget(_q.Range, TargetSelector.DamageType.Magical);
+                if (target.IsValidTarget(_q.Range))
                 {
-                    Drawing.DrawText(1300, 940, Color.Green,
-                        "Current Target: " + target.ChampionName);
-                }
-                else
-                {
-                    Drawing.DrawText(1300, 940, Color.Red,
-                        "Current Target: None") ;
+                    Render.Circle.DrawCircle(target.Position, 65f, Color.Red);
                 }
             }
 
@@ -185,61 +174,56 @@ namespace AutomatedAmumu
             if (Player.Level >= 9 && Player.InShop() || Player.IsDead && !(Items.HasItem(3364)))
             {
                 Player.BuyItem(ItemId.Sweeping_Lens_Trinket);
-                if (Player.GoldCurrent >= 250) {
+                if (Player.GoldTotal >= 250) {
                 Player.BuyItem(ItemId.Oracles_Lens_Trinket);
                 }
             }
 
             //Combo
-            if (_orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
+            if (_orbwalker.ActiveMode != Orbwalking.OrbwalkingMode.Combo) return;
+            var target = TargetSelector.GetTarget(_config.Item("QMaxRange").GetValue<Slider>().Value, TargetSelector.DamageType.Magical);
+
+            if (!target.IsValidTarget())
             {
-
-                var target = TargetSelector.GetTarget(_config.Item("QMaxRange").GetValue<Slider>().Value, TargetSelector.DamageType.Magical);
-
-                if (!target.IsValidTarget())
+                return;
+            }
+            //Use q
+            if (_config.Item("UseQCombo").GetValue<bool>())
+            {
+                if (target.IsValidTarget(_config.Item("QMaxRange").GetValue<Slider>().Value) && _q.IsReady())
                 {
-                    return;
+                    _q.CastIfHitchanceEquals(target, Hitchances[_config.Item("QhitChance").GetValue<Slider>().Value]);
                 }
-                //Use q
-                if (_config.Item("UseQCombo").GetValue<bool>())
+            }
+
+            //Use w
+            if (_config.Item("UseWCombo").GetValue<bool>())
+            {
+                if (ObjectManager.Player.Spellbook.GetSpell(SpellSlot.W).ToggleState == 1)
                 {
-                    if (target.IsValidTarget(_config.Item("QMaxRange").GetValue<Slider>().Value) && _q.IsReady())
+                    if (_w.IsReady() && ObjectManager.Get<Obj_AI_Hero>().Any(hero => hero.IsValidTarget(_w.Range)))
                     {
-                        _q.CastIfHitchanceEquals(target, Hitchances[_config.Item("QhitChance").GetValue<Slider>().Value]);
+                        _w.Cast();
                     }
-                }
+                }              
+            }
 
-                //Use w
-                if (_config.Item("UseWCombo").GetValue<bool>())
+            //Use e
+            if (_config.Item("UseECombo").GetValue<bool>())
+            {                    
+                if (target.IsValidTarget(_e.Range) && _e.IsReady())
                 {
-                    if (ObjectManager.Player.Spellbook.GetSpell(SpellSlot.W).ToggleState == 1)
-                    {
-                        if (_w.IsReady() && ObjectManager.Get<Obj_AI_Hero>().Any(hero => hero.IsValidTarget(_w.Range)))
-                        {
-                            _w.Cast();
-                        }
-                    }              
+                    _e.CastIfHitchanceEquals(target, Hitchances[_config.Item("EhitChance").GetValue<Slider>().Value]);
                 }
+            }
 
-                //Use e
-                if (_config.Item("UseECombo").GetValue<bool>())
-                {
-                    if (target.IsValidTarget(_e.Range) && _e.IsReady())
-                    {
-                        _e.CastIfHitchanceEquals(target, Hitchances[_config.Item("EhitChance").GetValue<Slider>().Value]);
-                    }
-                }
-
-                //Use r
-                if (_config.Item("UseRCombo").GetValue<bool>())
-                {
-                    var enemyCount = ObjectManager.Get<Obj_AI_Hero>().Count(e => e.IsValidTarget(_r.Range));
-                    if (_config.Item("UseRCombo").GetValue<bool>() && enemyCount >= _config.Item("RminP").GetValue<Slider>().Value && _r.IsReady())
-                    {
-                        _r.CastIfHitchanceEquals(target, Hitchances[_config.Item("RhitChance").GetValue<Slider>().Value]);
-                    }
-                }
-            }          
+            //Use r
+            if (!_config.Item("UseRCombo").GetValue<bool>()) return;
+            var enemyCount = ObjectManager.Get<Obj_AI_Hero>().Count(e => e.IsValidTarget(_r.Range));
+            if (_config.Item("UseRCombo").GetValue<bool>() && enemyCount >= _config.Item("RminP").GetValue<Slider>().Value && _r.IsReady())
+            {
+                _r.CastIfHitchanceEquals(target, Hitchances[_config.Item("RhitChance").GetValue<Slider>().Value]);
+            }
         }
     }
 }
