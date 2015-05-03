@@ -129,8 +129,6 @@ namespace Automated_Evelyn
             }
         }//end draw
 
-
-
         private static void Game_OnUpdate(EventArgs args)
         {
             Extra(); 
@@ -174,7 +172,7 @@ namespace Automated_Evelyn
             }
             
             //use smite on enemy
-            if (_config.Item("UseSmite").GetValue<bool>() && _smiteSlot.CanCast(target) && !target.IsMovementImpaired())
+            if (_config.Item("UseSmite").GetValue<bool>() && _smiteSlot.CanCast(target) && GetDamage(target) < target.Health && !target.IsMovementImpaired())
             {
                 _smiteSlot.Slot = SmiteSlot;
                 Player.Spellbook.CastSpell(SmiteSlot, target);
