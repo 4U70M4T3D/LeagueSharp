@@ -143,7 +143,7 @@ namespace AutomatedAmumu
 
         private static void Game_OnUpdate(EventArgs args)
         {
-            if (_e.IsReady())
+            if (_e.IsReady() && _e.Instance.ManaCost <= Player.Mana)
             {
                 //Killsteal with E
                 if (_config.Item("EKillsteal").GetValue<bool>())
@@ -188,7 +188,7 @@ namespace AutomatedAmumu
                 return;
             }
             //Use q
-            if (_config.Item("UseQCombo").GetValue<bool>())
+            if (_config.Item("UseQCombo").GetValue<bool>() && _q.Instance.ManaCost <= Player.Mana)
             {
                 if (target.IsValidTarget(_config.Item("QMaxRange").GetValue<Slider>().Value) && _q.IsReady())
                 {
@@ -197,7 +197,7 @@ namespace AutomatedAmumu
             }
 
             //Use w
-            if (_config.Item("UseWCombo").GetValue<bool>())
+            if (_config.Item("UseWCombo").GetValue<bool>() && _w.Instance.ManaCost <= Player.Mana)
             {
                 if (ObjectManager.Player.Spellbook.GetSpell(SpellSlot.W).ToggleState == 1)
                 {
@@ -209,7 +209,7 @@ namespace AutomatedAmumu
             }
 
             //Use e
-            if (_config.Item("UseECombo").GetValue<bool>())
+            if (_config.Item("UseECombo").GetValue<bool>() && _e.Instance.ManaCost <= Player.Mana)
             {                    
                 if (target.IsValidTarget(_e.Range) && _e.IsReady())
                 {
@@ -218,7 +218,7 @@ namespace AutomatedAmumu
             }
 
             //Use r
-            if (!_config.Item("UseRCombo").GetValue<bool>()) return;
+            if (!_config.Item("UseRCombo").GetValue<bool>() && _r.Instance.ManaCost <= Player.Mana) return;
             var enemyCount = ObjectManager.Get<Obj_AI_Hero>().Count(e => e.IsValidTarget(_r.Range));
             if (_config.Item("UseRCombo").GetValue<bool>() && enemyCount >= _config.Item("RminP").GetValue<Slider>().Value && _r.IsReady())
             {
