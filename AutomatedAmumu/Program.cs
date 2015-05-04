@@ -24,11 +24,11 @@ namespace AutomatedAmumu
             float temp = 0;
             float mana = 0;
 
-            temp += Convert.ToSingle((Player.PercentAttackSpeedMod * 2) * Player.GetAutoAttackDamage(target, true));
+            temp += Convert.ToSingle(Player.GetAutoAttackDamage(target, true));
             if ((mana += _q.Instance.ManaCost) <= Player.Mana)
-                temp += 2 * _q.GetDamage(target);
-            if ((mana += _w.Instance.ManaCost * 2) <= Player.Mana)
-                temp += 2 * _w.GetDamage(target);
+                temp += _q.GetDamage(target);
+            if ((mana += _w.Instance.ManaCost) <= Player.Mana)
+                temp += _w.GetDamage(target);
             if (_e.IsReady() && (mana += _e.Instance.ManaCost) <= Player.Mana)
                 temp += _e.GetDamage(target);
             if (_r.IsReady() && (mana + _r.Instance.ManaCost) <= Player.Mana)
