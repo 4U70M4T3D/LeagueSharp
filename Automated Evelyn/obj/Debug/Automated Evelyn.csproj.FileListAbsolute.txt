@@ -1,2 +1,0 @@
-C:\Users\Javier\documents\visual studio 2013\Projects\Automated Evelyn\Automated Evelyn\bin\Release\Automated Evelyn.exe.config
-C:\Users\Javier\Documents\GitHub\LeagueSharp\Automated Evelyn\bin\Release\Automated Evelyn.exe.config
