@@ -49,7 +49,7 @@ namespace Automated_Evelyn
 
             //Combo settings
             _cfgMenu.SubMenu("Combo Settings").AddItem(new MenuItem("RminP", "Min players to ult").SetValue(new Slider(3, 1, 5)));
-            _cfgMenu.SubMenu("Combo Settings").AddItem(new MenuItem("WmaxHP", "Auto cast W when above hp %").SetValue(new Slider(25, 1, 99)));
+            _cfgMenu.SubMenu("Combo Settings").AddItem(new MenuItem("WmaxHP", "Use W when above hp %").SetValue(new Slider(25, 1, 99)));
             _cfgMenu.SubMenu("Combo Settings").AddItem(new MenuItem("BorkCut", "Use Botrk/Cutlass").SetValue(true));
             _cfgMenu.SubMenu("Combo Settings").AddItem(new MenuItem("UseGB", "Use Ghostblade").SetValue(true));
             _cfgMenu.SubMenu("Combo Settings").AddItem(new MenuItem("UseSmite", "Use Smite on combo").SetValue(true));
@@ -62,7 +62,7 @@ namespace Automated_Evelyn
             _cfgMenu.SubMenu("Drawings").AddItem(new MenuItem("Total damage", "Combo Damage").SetValue(new Circle(true, Color.White)));
 
             //Misc        
-            _cfgMenu.SubMenu("Misc").AddItem(new MenuItem("WmaxHP", "Max HP to W slows").SetValue(new Slider(25, 1, 99)));      
+            _cfgMenu.SubMenu("Misc").AddItem(new MenuItem("WmaxHP", "Auto cast w when below hp %").SetValue(new Slider(25, 1, 99)));      
             _cfgMenu.SubMenu("Misc").AddItem(new MenuItem("Strinket", "Swap to Red trinket at lvl 9 and upgrade").SetValue(true));
             
             //Attach to root
@@ -98,7 +98,7 @@ namespace Automated_Evelyn
             CustomDamageIndicator.Enabled = _cfgMenu.Item("Total damage").GetValue<Circle>().Active;
 
             //Ability Range indicators
-            if (_cfgMenu.Item("DrawQ").GetValue<bool>() && _q.IsReady())
+            if (_cfgMenu.Item("DrawQ").GetValue<bool>())
             {
                 Render.Circle.DrawCircle(ObjectManager.Player.Position, _q.Range, Color.WhiteSmoke);
             }
@@ -141,7 +141,9 @@ namespace Automated_Evelyn
 
             //use q
             if (_cfgMenu.Item("UseQCombo").GetValue<bool>() && target.IsValidTarget(_q.Range))
+            {
                 _q.Cast();
+            }
 
             //Use Botrk
             if (target.IsValidTarget(450) && target.Health > GetDamage(target) && _cfgMenu.Item("BorkCut").GetValue<bool>() && Items.CanUseItem(3144) ||
@@ -157,12 +159,14 @@ namespace Automated_Evelyn
                     if (hasCutGlass || Player.Health + damage < Player.MaxHealth)
                         Items.UseItem(itemId, target);
                 }
-            }
+            }//from Imeh's twitch#
 
             //use w
             if (_cfgMenu.Item("UseWCombo").GetValue<bool>() && _w.IsReady() && !target.IsValidTarget(_e.Range)
-                 && Player.HealthPercent >= _cfgMenu.Item("WmaxHP").GetValue<Slider>().Value)
+                && Player.HealthPercent >= _cfgMenu.Item("WmaxHP").GetValue<Slider>().Value)
+            {
                 _w.Cast();
+            }
 
             //use smite on enemy
             if (_cfgMenu.Item("UseSmite").GetValue<bool>() &&  Items.HasItem(3706) || Items.HasItem(3707) || Items.HasItem(3708) ||
