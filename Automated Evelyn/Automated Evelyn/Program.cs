@@ -23,7 +23,7 @@ namespace Automated_Evelyn
 
         private static void Game_OnGameLoad(EventArgs args)
         {
-            if ("Evelynn" != Player.ChampionName) return;
+            if (Player.BaseSkinName != "Evelynn") return;
             _q = new Spell(SpellSlot.Q, 495f);
             _w = new Spell(SpellSlot.W, 300f);
             _e = new Spell(SpellSlot.E, 265f);
@@ -53,7 +53,12 @@ namespace Automated_Evelyn
             _cfgMenu.SubMenu("Combo Settings").AddItem(new MenuItem("BorkCut", "Use Botrk/Cutlass").SetValue(true));
             _cfgMenu.SubMenu("Combo Settings").AddItem(new MenuItem("UseGB", "Use Ghostblade").SetValue(true));
             _cfgMenu.SubMenu("Combo Settings").AddItem(new MenuItem("UseSmite", "Use Smite on combo").SetValue(true));
-            
+
+            //Jungle Clear Settings
+            _cfgMenu.SubMenu("Jungle Clear").AddItem(new MenuItem("JGClearQ", "Use Q").SetValue(true));
+            _cfgMenu.SubMenu("Jungle Clear").AddItem(new MenuItem("JGClearE", "Use E").SetValue(true));
+            _cfgMenu.SubMenu("Jungle Clear").AddItem(new MenuItem("JGClearM", "Orbwalker Movement").SetValue(true));
+                
             //Drawings
             _cfgMenu.SubMenu("Drawings").AddItem(new MenuItem("DrawQ", "DrawQ").SetValue(true));
             _cfgMenu.SubMenu("Drawings").AddItem(new MenuItem("DrawE", "DrawE").SetValue(true));
@@ -64,7 +69,9 @@ namespace Automated_Evelyn
             //Misc        
             _cfgMenu.SubMenu("Misc").AddItem(new MenuItem("WmaxHP", "Auto cast w when below hp %").SetValue(new Slider(25, 1, 99)));      
             _cfgMenu.SubMenu("Misc").AddItem(new MenuItem("Strinket", "Swap to Red trinket at lvl 9 and upgrade").SetValue(true));
-            
+            _cfgMenu.SubMenu("Misc").AddItem(new MenuItem("Autopot", "Autopotion").SetValue(true));
+            _cfgMenu.SubMenu("Misc").AddItem(new MenuItem("AutopotHP", "Use potion when HP is bellow ").SetValue(new Slider(50, 1, 99))); 
+
             //Attach to root
             _cfgMenu.AddToMainMenu();
 
@@ -86,7 +93,7 @@ namespace Automated_Evelyn
             //Draw current target
             if (_orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo && _cfgMenu.Item("Ctarget").GetValue<bool>())
             {
-                var target = TargetSelector.GetTarget(_q.Range, TargetSelector.DamageType.Magical);
+                var target = TargetSelector.GetTarget(_q.Range, Damagetype());
                 if (target.IsValidTarget(_q.Range))
                 {
                     Drawing.DrawText(50, 150, Color.Green, "damage: " + (GetDamage(target)));
@@ -108,8 +115,8 @@ namespace Automated_Evelyn
             }
             if (_cfgMenu.Item("DrawR").GetValue<bool>() && _r.IsReady())
             {
-                Render.Circle.DrawCircle(ObjectManager.Player.Position, _r.Range, Color.Purple);
-            }
+                Render.Circle.DrawCircle(ObjectManager.Player.Position, _r.Range, Color.Purple);                      
+            }           
         }//end draw
 
         private static void Game_OnUpdate(EventArgs args)
@@ -117,14 +124,20 @@ namespace Automated_Evelyn
             if (_orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
             {
                 Combo();
-            }    
+                return;
+            }
+            if (_orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LaneClear)
+            {
+                JungleClear();
+            }
             Extra();
         }//end game update
 
         private static void Combo()
         {
             //get target
-            var target = TargetSelector.GetTarget(_r.Range, TargetSelector.DamageType.Physical);
+            var target = TargetSelector.GetTarget(_r.Range, Damagetype());
+            _orbwalker.SetMovement(true);
 
             //return if no valid target is found
             if (target == null || Player.IsImmovable) return;
@@ -132,7 +145,7 @@ namespace Automated_Evelyn
             //Use r 
             if (target.IsValidTarget(_r.Range) && _r.IsReady())
             {
-                var bestposition = AutomatedLybrary.BestPosition(_r, 250f);
+                var bestposition = AutomatedLybrary.BestPosition(_r, 250f, TargetSelector.DamageType.Magical);
                 if (bestposition.CountEnemiesInRange(250f) >= _cfgMenu.Item("RminP").GetValue<Slider>().Value)
                 {
                     _r.Cast(bestposition);
@@ -194,8 +207,28 @@ namespace Automated_Evelyn
             }     
         }//end combo
 
+        //jungle clear
+        private static void JungleClear()
+        {
+            _orbwalker.SetMovement(_cfgMenu.Item("JGClearM").GetValue<bool>());
+            var mobs =
+                MinionManager.GetMinions(500, MinionTypes.All, MinionTeam.Neutral).OrderBy(m => m.MaxHealth);
+            foreach (var minion in mobs.Where(minion => minion.IsValidTarget(_q.Range)))
+                if (mobs.FirstOrDefault().IsValidTarget())
+                {
+                    if (_cfgMenu.Item("JGClearQ").GetValue<bool>() && _q.IsReady() && Player.Mana > _q.Instance.ManaCost)
+                        _q.Cast();
+
+                    if (_cfgMenu.Item("JGClearE").GetValue<bool>() && _e.IsReady() && Player.Mana > _e.Instance.ManaCost)
+                        _e.CastOnUnit(minion);
+                }           
+        }//end jungle clear
+
+        //extra
         private static void Extra()
         {
+            AutoPot();
+
             //use w if slowed and hp is below x
             if (_w.IsReady() &&
                 ObjectManager.Player.HasBuffOfType(BuffType.Slow) && Player.HealthPercent < _cfgMenu.Item("WminHP").GetValue<Slider>().Value)
@@ -213,8 +246,14 @@ namespace Automated_Evelyn
                 {
                     Player.BuyItem(ItemId.Oracles_Lens_Trinket);
                 }
-            }
-            
+            }//end extra
+
+            //check highest damage
+            if (Player.InShop())
+            {
+                Damagetype();
+            }//set damage type target priority
+
             if (!Player.InShop() && !_cfgMenu.Item("UseSmite").GetValue<bool>()) return;
             foreach (var spell in ObjectManager.Player.Spellbook.Spells.Where(spell => String.Equals(spell.Name, 
                 "s5_summonersmiteplayerganker", StringComparison.CurrentCultureIgnoreCase)))
@@ -222,9 +261,36 @@ namespace Automated_Evelyn
                 SmiteSlot = spell.Slot;
                 _smiteSlot = new Spell(SmiteSlot, Range);
                 return;
-            }
+            }               
         }//end extra
-   
+
+        //Autopot
+        private static void AutoPot()
+        {
+            if (!_cfgMenu.Item("Autopot").GetValue<bool>() || !(Player.HealthPercent < _cfgMenu.Item("AutopotHP").GetValue<Slider>().Value)
+                || Player.HasBuff("RegenerationPotion", true) || Player.HasBuff("ItemMiniRegenPotion", true) || Player.IsRecalling() || Player.InFountain()) return;
+          
+            if (Items.HasItem(2010) && Items.CanUseItem(2010))
+            {
+                Items.UseItem(2010);
+            }
+            if (Items.HasItem(2003) && Items.CanUseItem(2003))
+            {
+                Items.UseItem(2003);
+            }
+        }//end autopot
+
+        //damagetype
+        private static TargetSelector.DamageType Damagetype()
+        {
+            if (Player.TotalAttackDamage > Player.TotalMagicalDamage)
+            {               
+                return TargetSelector.DamageType.Physical;
+            }           
+            return TargetSelector.DamageType.Magical; ;
+        }//end damage type
+
+        //getdamage
         private static float GetDamage(Obj_AI_Hero target)
         {
             float totaldamage = 0;

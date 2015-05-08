@@ -11,7 +11,7 @@ namespace Automated_Evelyn
     {
         
         // As I gain more experience/knowledge with programming ill expand this class with more useful functions as well as improve them.
-        public static Vector3 BestPosition(Spell spell, float spellRadius)
+        public static Vector3 BestPosition(Spell spell, float spellRadius, TargetSelector.DamageType damageType)
         {
             float x = 0;
             float y = 0;
@@ -70,7 +70,7 @@ namespace Automated_Evelyn
                 }
                 return lstBestPositions[0];
             }
-            return TargetSelector.GetTarget(spell.Range, TargetSelector.DamageType.Magical).Position;
+            return TargetSelector.GetTarget(spell.Range, damageType).Position;
         }
     }
 }
