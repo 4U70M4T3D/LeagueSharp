@@ -4,7 +4,7 @@ Hello, my name is Automated on the l# forums. This summer I have decided to lear
  
 AutomatedAmumu - Credits to iMeh and Beaving. Using Imeh's Twitch# assembly as a template as well as using his damage drawing class. Beaving has a lot of great assemblies as well which helped me quite a bit.  
 
-AutomatedEvelyn - Credits to Imeh and blackt34. Using imehs damage drawing class,  and learned how to use/cast smite thanks to blackt34's code. 
+AutomatedEvelynn - Credits to Imeh and blackt34. Using imehs damage drawing class,  and learned how to use/cast smite thanks to blackt34's code. 
 
 LoadingFreezeCheck - Credit to Nouser as this assembly is merely a personalized version of his assembly. 
 
