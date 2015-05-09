@@ -124,10 +124,12 @@ namespace AutomatedEvelynn
 
             if (comboW && SpellDirectory[Spells.W].IsReady() && healthW <= Player.HealthPercent)
                 SpellDirectory[Spells.W].Cast();
-                    
+
             if (Player.Distance(target) <= 600f && IgniteDamage(target) >= target.Health &&
-               useIgnite)            
+                useIgnite)
+            {
                 Player.Spellbook.CastSpell(_ignite, target);
+            }
         }
         #endregion
 
