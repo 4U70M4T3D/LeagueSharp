@@ -50,7 +50,7 @@ namespace AutomatedEvelynn
         {
             if (ObjectManager.Player.BaseSkinName != "Evelynn") return;
 
-            Notifications.AddNotification("Automated Evelynn by Automated v1.0.1.0", 4000);
+            Notifications.AddNotification("Automated Evelynn by Automated v1.0.0.3", 4000);
             
             SpellDirectory[Spells.R].SetSkillshot(0.25f, 650f, float.MaxValue, false, SkillshotType.SkillshotCircle);
             _ignite = Player.GetSpellSlot("summonerdot");           
