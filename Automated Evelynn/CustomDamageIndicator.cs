@@ -4,7 +4,7 @@ using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
 
-namespace Automated_Evelyn
+namespace AutomatedEvelynn
 {
     internal class CustomDamageIndicator
     {
@@ -29,7 +29,7 @@ namespace Automated_Evelyn
         {
             // Apply needed field delegate for damage calculation
             _damageToUnit = damageToUnit;
-            DrawingColor = System.Drawing.Color.Green;
+            DrawingColor = System.Drawing.Color.AntiqueWhite;
             Enabled = true;
 
             // Register event handlers
